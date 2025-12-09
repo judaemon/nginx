@@ -1,0 +1,14 @@
+services:
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    restart: always
+    ports:
+      - 80:80
+    networks:
+      - nginx-network
+
+networks:
+  nginx-network:
+    name: nginx-network
+    driver: bridge
