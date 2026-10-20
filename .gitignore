@@ -1,3 +1,9 @@
 logs/*.log
 .env
 templates/*.template
+letsencrypt/*
+!letsencrypt/.gitkeep
+certbot-www/*
+!certbot-www/.gitkeep
+snippets/real-ip/*.conf
+!templates/default.conf.template

@@ -1,0 +1,18 @@
+# HTTPS for the default page. Create the certificate first
+# (`make cert-local DOMAIN=...` or `make cert DOMAIN=...`), then copy this to
+# default-ssl.conf.template and run `make reload-nginx`.
+server {
+    listen 443 ssl;
+    server_name ${DEFAULT_DOMAIN};
+
+    ssl_certificate     /etc/letsencrypt/live/${DEFAULT_DOMAIN}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${DEFAULT_DOMAIN}/privkey.pem;
+
+    # Empty HSTS in .env = header not sent (local); set it in production
+    add_header Strict-Transport-Security "${HSTS}" always;
+
+    location / {
+        root /usr/share/nginx/html;
+        index index.html;
+    }
+}

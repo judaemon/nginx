@@ -1,0 +1,12 @@
+# Production additions. Enable with COMPOSE_FILE in .env (see .env.example).
+services:
+  certbot:
+    image: certbot/certbot:v5.8.0
+    container_name: certbot
+    restart: unless-stopped
+    volumes:
+      - ./letsencrypt:/etc/letsencrypt
+      - ./certbot-www:/var/www/certbot
+    # Check twice a day; certbot only renews certificates that are due.
+    # nginx picks up renewed certificates via scripts/reload-on-cert-change.sh.
+    entrypoint: /bin/sh -c 'trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot --quiet; sleep 12h & wait $$!; done'

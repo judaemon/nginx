@@ -1,9 +1,25 @@
-# Copy to <name>.conf.template, set the domain variable in .env and .env.example,
-# then run `make reload-nginx`.
+# Copy to <name>.conf.template, set the domain variable in .env,
+# create the certificate first (see readme), then run `make reload-nginx`.
 #
 # server {
 #     listen 80;
 #     server_name ${APP_DOMAIN};
+#     include /etc/nginx/snippets/acme-challenge.conf;
+#     location / {
+#         return 301 https://$host$request_uri;
+#     }
+# }
+#
+# server {
+#     listen 443 ssl;
+#     server_name ${APP_DOMAIN};
+#
+#     ssl_certificate     /etc/letsencrypt/live/${APP_DOMAIN}/fullchain.pem;
+#     ssl_certificate_key /etc/letsencrypt/live/${APP_DOMAIN}/privkey.pem;
+#
+#     # Empty HSTS in .env = header not sent (local); set it in production
+#     add_header Strict-Transport-Security "${HSTS}" always;
+#
 #     location / {
 #         set $upstream container-name;
 #         proxy_pass http://$upstream:port;

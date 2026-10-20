@@ -1,0 +1,6 @@
+# Behind a load balancer: copy to load-balancer.conf and set the balancer's IP range.
+# nginx then logs and forwards the real visitor IP instead of the balancer's.
+#
+# set_real_ip_from 10.0.0.0/8;
+# real_ip_header X-Forwarded-For;
+# real_ip_recursive on;
