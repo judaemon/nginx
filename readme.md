@@ -51,6 +51,22 @@ make cert-local DOMAIN=app.localhost
 
 Use `*.localhost` domains locally: they resolve to 127.0.0.1 without editing `/etc/hosts`.
 
+**Browser says "Not secure" / `NET::ERR_CERT_AUTHORITY_INVALID` (Linux, Chrome/Brave/Chromium)**
+
+These browsers use their own trust store (`~/.pki/nssdb`), not the system one. `mkcert -install`
+skips it if it does not exist yet (or if `certutil` is missing), while `curl` still works. Fix:
+
+```sh
+sudo pacman -S nss                       # provides certutil (Debian/Ubuntu: libnss3-tools)
+mkdir -p ~/.pki/nssdb
+certutil -d sql:$HOME/.pki/nssdb -N --empty-password
+certutil -d sql:$HOME/.pki/nssdb -A -t "C,," -n "mkcert development CA" \
+    -i "$(mkcert -CAROOT)/rootCA.pem"
+```
+
+Then fully quit the browser (`pkill brave` / `pkill chrome`) and reopen it.
+Firefox keeps its own store per profile: open Firefox once, then rerun `mkcert -install`.
+
 **Production** (Let's Encrypt; DNS must already point to the server):
 
 ```sh
