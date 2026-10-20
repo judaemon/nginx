@@ -43,6 +43,8 @@ Either:
 - **Join the app's network from here (local, recommended):** copy
   `docker-compose.override.yml.example` to `docker-compose.override.yml`, add the app's network,
   and `make up`. The app project needs no changes and stays reachable however it is started.
+  Every network listed there must exist, or nginx will not start (fresh machine, after
+  `docker network prune`): create it with `docker network create <name>`.
 - **Add the app to `nginx-network`** in the app's own compose file. Beware of a
   `docker-compose.override.yml` there: Compose skips it when run with `-f`, as many Makefiles do.
 
@@ -58,7 +60,9 @@ Certificates live in `letsencrypt/live/<domain>/{fullchain,privkey}.pem` in ever
 so site templates are identical locally and in production.
 
 Get the certificate **before** adding the site template: nginx refuses to load a site whose
-certificate is missing (`make reload-nginx` tests first, so a running nginx is never affected).
+certificate is missing. `make reload-nginx` fails on it, so a running nginx is never affected;
+at container start (reboot, `make up`) the site is skipped with a warning in `make logs`. This
+applies on every machine: copy a template only where its certificate already exists.
 
 **Local** ([mkcert](https://github.com/FiloSottile/mkcert), trusted by your browser):
 
@@ -111,6 +115,19 @@ Nothing changes by default. When you move behind one:
 **Load balancer**: copy `snippets/real-ip/load-balancer.conf.example` to `load-balancer.conf`
 and set the balancer's IP range. If the balancer terminates TLS, point it at port 80 and drop
 the HTTP→HTTPS redirect from the site template.
+
+## Troubleshooting
+
+Find the message with `make logs` (startup) or in `logs/error.log` (requests).
+
+| Message                                              | Cause and fix                                                         |
+| ---------------------------------------------------- | --------------------------------------------------------------------- |
+| `skipping …, not set in the container: VAR`          | `VAR` missing from `.env`, or `.env` changed after start: `make up`   |
+| `skipping …, certificate not found: …`               | Create the certificate (see [HTTPS](#https)), then `make reload-nginx` |
+| `nginx container is older than .env …`               | `.env` or the compose files changed: `make up`, then retry            |
+| `… could not be resolved` (site returns 502)         | App container down, or not on a shared network (see [Reaching the app container](#reaching-the-app-container)) |
+| `network … declared as external, but could not be found` | Network from the override is missing: `docker network create <name>` |
+| `connect() failed (111: Connection refused)` (502)   | Container found but nothing listens on that port: check the port in `proxy_pass` |
 
 ## Commands
 
