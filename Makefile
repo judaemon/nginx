@@ -1,6 +1,6 @@
 .PHONY: reload-nginx restart-nginx up down test-config clear-logs logs
 
-reload-nginx:
+reload-nginx: test-config
 	docker compose exec nginx nginx -s reload
 
 restart-nginx:
@@ -17,4 +17,7 @@ test-config:
 
 clear-logs:
 	docker compose exec nginx sh -c "rm -f /var/log/nginx/*.log"
-	docker compose exec nginx nginx -s reload
+	docker compose exec nginx nginx -s reopen
+
+logs:
+	docker compose logs -f nginx
