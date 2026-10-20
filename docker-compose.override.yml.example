@@ -1,0 +1,14 @@
+# Local only: copy to docker-compose.override.yml (git-ignored; `docker compose` loads it
+# automatically unless COMPOSE_FILE or -f is set).
+#
+# Lets nginx reach app containers on their own networks, so app projects need no changes
+# and stay reachable however they are started. Each network must already exist,
+# otherwise nginx will not start (`docker network create <name>`).
+services:
+  nginx:
+    networks: [nginx-network, app-network]
+
+networks:
+  app-network:
+    name: my-app-network
+    external: true

@@ -25,12 +25,30 @@ Production: in `.env`, uncomment `COMPOSE_FILE` (adds the certbot renewal contai
 1. Get a certificate for the domain (see [HTTPS](#https)).
 2. Copy `templates/site.conf.template.example` to `templates/<name>.conf.template` and uncomment it.
 3. Use a variable for the domain (e.g. `${APP_DOMAIN}`) and set it in `.env`.
-4. Make sure the app container is on the `nginx-network` network.
-5. `make reload-nginx`
+4. Connect nginx and the app (see [Reaching the app container](#reaching-the-app-container)).
+5. `make up` if you changed `.env` or the override, then `make reload-nginx`.
 
 Only variables set in the container's environment (uppercase) are substituted, so lowercase
-nginx variables like `$host` are left alone. After editing `.env`, run `make up` to recreate the
-container; `restart` does not re-read it.
+nginx variables like `$host` are left alone. The container reads `.env` only when it is created,
+so after editing `.env` run `make up`; `make reload-nginx` refuses to run until you do.
+
+A template that uses a variable missing from the container is skipped at startup (warning in
+`make logs`), so nginx and the other sites keep running. `make reload-nginx` fails on it instead.
+
+### Reaching the app container
+
+nginx finds an app by container name, which only works when both share a Docker network.
+Either:
+
+- **Join the app's network from here (local, recommended):** copy
+  `docker-compose.override.yml.example` to `docker-compose.override.yml`, add the app's network,
+  and `make up`. The app project needs no changes and stays reachable however it is started.
+- **Add the app to `nginx-network`** in the app's own compose file. Beware of a
+  `docker-compose.override.yml` there: Compose skips it when run with `-f`, as many Makefiles do.
+
+In the template, proxy to the app's unique `container_name` (e.g. `notifications-laravel`), not
+its service name: with several apps, names like `laravel` or `nginx` can exist on more than one
+network. Until the name resolves, that site returns 502 while nginx and other sites keep working.
 
 Copy the same templates to each machine (local, production) and only change the values in `.env`.
 
@@ -101,7 +119,7 @@ the HTTP→HTTPS redirect from the site template.
 | `make up` / `down`         | Start (or recreate after `.env` changes) / stop  |
 | `make reload-nginx`        | Re-render templates, test, and reload            |
 | `make test-config`         | Re-render templates and run `nginx -t`           |
-| `make restart-nginx`       | Restart the container                            |
+| `make restart-nginx`       | Recreate the container (re-reads `.env`)         |
 | `make sites`               | Print the rendered site configs                  |
 | `make logs`                | Follow container logs                            |
 | `make clear-logs`          | Delete log files and reopen them                 |

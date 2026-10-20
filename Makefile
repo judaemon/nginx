@@ -3,8 +3,10 @@
 reload-nginx: test-config
 	docker compose exec nginx nginx -s reload
 
+# Recreate rather than restart: a plain restart keeps the environment from when the
+# container was created, so .env changes would be ignored
 restart-nginx:
-	docker compose restart nginx
+	docker compose up -d --force-recreate nginx
 
 up:
 	docker compose up -d
@@ -12,9 +14,13 @@ up:
 down:
 	docker compose down
 
-# Re-render templates/*.template into /etc/nginx/sites (only runs automatically at container start)
+# Re-render templates/*.template into /etc/nginx/sites (only runs automatically at container start).
+# Fails if .env or the compose files changed since the container was created (its
+# environment would be stale) or if a template uses a variable that is not set.
 render:
-	docker compose exec nginx sh -c 'rm -f /etc/nginx/sites/*.conf && /docker-entrypoint.d/20-envsubst-on-templates.sh'
+	@if docker compose up -d --dry-run nginx 2>&1 | grep -q Recreate; then \
+		echo "nginx container is older than .env or the compose files: run 'make up' first"; exit 1; fi
+	docker compose exec -e STRICT=1 nginx sh -c 'rm -f /etc/nginx/sites/*.conf && /docker-entrypoint.d/20-envsubst-on-templates.sh'
 
 test-config: render
 	docker compose exec nginx nginx -t

@@ -7,3 +7,4 @@ certbot-www/*
 !certbot-www/.gitkeep
 snippets/real-ip/*.conf
 !templates/default.conf.template
+docker-compose.override.yml

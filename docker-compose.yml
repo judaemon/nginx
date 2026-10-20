@@ -19,6 +19,8 @@ services:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
       - ./snippets:/etc/nginx/snippets:ro
       - ./templates:/etc/nginx/templates:ro
+      # Skips templates with unset variables instead of rendering a config nginx rejects
+      - ./scripts/render-templates.sh:/docker-entrypoint.d/20-envsubst-on-templates.sh:ro
       - ./scripts/reload-on-cert-change.sh:/docker-entrypoint.d/40-reload-on-cert-change.sh:ro
       - ./letsencrypt:/etc/letsencrypt:ro
       - ./certbot-www:/var/www/certbot:ro
