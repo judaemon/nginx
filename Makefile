@@ -1,4 +1,4 @@
-.PHONY: reload-nginx restart-nginx up down test-config clear-logs logs
+.PHONY: reload-nginx restart-nginx up down render test-config clear-logs logs sites
 
 reload-nginx: test-config
 	docker compose exec nginx nginx -s reload
@@ -12,7 +12,11 @@ up:
 down:
 	docker compose down
 
-test-config:
+# Re-render templates/*.template into /etc/nginx/sites (only runs automatically at container start)
+render:
+	docker compose exec nginx sh -c 'rm -f /etc/nginx/sites/*.conf && /docker-entrypoint.d/20-envsubst-on-templates.sh'
+
+test-config: render
 	docker compose exec nginx nginx -t
 
 clear-logs:
@@ -21,3 +25,7 @@ clear-logs:
 
 logs:
 	docker compose logs -f nginx
+
+# Show the rendered site configs nginx is actually using
+sites:
+	docker compose exec nginx sh -c 'tail -n +1 /etc/nginx/sites/*.conf'

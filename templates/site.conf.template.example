@@ -1,7 +1,9 @@
+# Copy to <name>.conf.template, set the domain variable in .env and .env.example,
+# then run `make reload-nginx`.
+#
 # server {
 #     listen 80;
-#     server_name localhost;
-
+#     server_name ${APP_DOMAIN};
 #     location / {
 #         set $upstream container-name;
 #         proxy_pass http://$upstream:port;
